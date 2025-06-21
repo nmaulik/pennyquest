@@ -1,155 +1,169 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Flag Quiz Game</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PennyQuest</title>
   <style>
     body {
       margin: 0;
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Orbitron', sans-serif;
       color: white;
+      background: black;
       overflow: hidden;
     }
-
-    .background {
+    .milkyway {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
-      overflow: hidden;
+      width: 100%;
+      height: 100%;
       z-index: -1;
+      background: radial-gradient(ellipse at center, #111 0%, #000 100%);
     }
-
     .star {
       position: absolute;
-      width: 2px;
-      height: 2px;
       background: white;
       border-radius: 50%;
       animation: twinkle 2s infinite ease-in-out;
     }
-
     @keyframes twinkle {
-      0%, 100% { opacity: 0.3; transform: scale(1); }
-      50% { opacity: 1; transform: scale(1.5); }
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
     }
-
     .container {
       padding: 2rem;
+      max-width: 600px;
+      margin: auto;
       text-align: center;
     }
-
-    img {
-      max-height: 200px;
-      margin: 1rem 0;
-      border: 2px solid white;
-    }
-
-    .store-link {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      padding: 0.5rem 1rem;
-      background: rgba(255, 255, 255, 0.2);
-      border: 1px solid white;
-      border-radius: 8px;
-      color: white;
-      text-decoration: none;
-      font-weight: bold;
-    }
-
-    input[type="text"] {
-      padding: 0.5rem;
-      border-radius: 5px;
-      border: none;
-      width: 200px;
-    }
-
     button {
+      margin: 0.5rem;
       padding: 0.5rem 1rem;
-      margin-top: 1rem;
-      background-color: #2d3e50;
-      color: white;
-      border: none;
-      border-radius: 5px;
+      font-size: 1rem;
       cursor: pointer;
+      background-color: #222;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 5px;
+    }
+    .option-btn {
+      display: block;
+      width: 100%;
+      margin: 0.5rem 0;
     }
   </style>
 </head>
+
 <body>
-  <div class="background" id="stars"></div>
+  <div class="milkyway" id="milkyway"></div>
   <div class="container">
-    <a class="store-link" href="store.html">Go to Store</a>
-    <h1>Flag Quiz</h1>
-    <div id="quiz">
-      <img id="flag" src="" alt="Flag" />
-      <div>
-        <input type="text" id="answer" placeholder="Enter country name..." />
-        <br />
-        <button onclick="submitAnswer()">Submit</button>
-        <p id="feedback"></p>
-      </div>
+    <h1>PennyQuest</h1>
+    <div id="menu">
+      <button onclick="startGame('flags')">Flags</button>
+      <button onclick="startGame('geography')">Geography</button>
+      <button onclick="startGame('history')">History</button>
+    </div>
+
+    <div id="game" style="display:none">
+      <h2 id="question"></h2>
+      <img id="flag-image" src="" style="max-width: 300px; display:none"><br>
+      <div id="options"></div>
+      <p id="result"></p>
+      <p>Pennies: <span id="score">0</span></p>
+      <button onclick="showMenu()">Back to Menu</button>
     </div>
   </div>
 
   <script>
-    const questions = [
-      'ad', 'ae', 'af', 'ag', 'ai', 'al', 'am', 'ao', 'aq', 'ar', 'as', 'at', 'au', 'aw', 'ax', 'az', 'ba', 'bb', 'bd',
-      'be', 'bf', 'bg', 'bh', 'bi', 'bj', 'bl', 'bm', 'bn', 'bo', 'bq', 'br', 'bs', 'bt', 'bv', 'bw', 'by', 'bz', 'ca',
-      'cc', 'cd', 'cf', 'cg', 'ch', 'ci', 'ck', 'cl', 'cm', 'cn', 'co', 'cr', 'cu', 'cv', 'cw', 'cx', 'cy', 'cz', 'de',
-      'dj', 'dk', 'dm', 'do', 'dz', 'ec', 'ee', 'eg', 'eh', 'er', 'es', 'et', 'fi', 'fj', 'fk', 'fm', 'fo', 'fr', 'ga',
-      'gb-eng', 'gb-nir', 'gb-sct', 'gb-wls', 'gb', 'gd', 'ge', 'gf', 'gg', 'gh', 'gi', 'gl', 'gm', 'gn', 'gp', 'gq',
-      'gr', 'gs', 'gt', 'gu', 'gw', 'gy', 'hk', 'hm', 'hn', 'hr', 'ht', 'hu', 'id', 'ie', 'il', 'im', 'in', 'io', 'iq',
-      'ir', 'is', 'it', 'je', 'jm', 'jo', 'jp', 'ke', 'kg', 'kh', 'ki', 'km', 'kn', 'kp', 'kr', 'kw', 'ky', 'kz', 'la',
-      'lb', 'lc', 'li', 'lk', 'lr', 'ls', 'lt', 'lu', 'lv', 'ly', 'ma', 'mc', 'md', 'me', 'mf', 'mg', 'mh', 'mk', 'ml',
-      'mm', 'mn', 'mo', 'mp', 'mq', 'mr', 'ms', 'mt', 'mu', 'mv', 'mw', 'mx', 'my', 'mz', 'na', 'nc', 'ne', 'nf', 'ng',
-      'ni', 'nl', 'no', 'np', 'nr', 'nu', 'nz', 'om', 'pa', 'pe', 'pf', 'pg', 'ph', 'pk', 'pl', 'pm', 'pn', 'pr', 'ps',
-      'pt', 'pw', 'py', 'qa', 're', 'ro', 'rs', 'ru', 'rw', 'sa', 'sb', 'sc', 'sd', 'se', 'sg', 'sh', 'si', 'sj', 'sk',
-      'sl', 'sm', 'sn', 'so', 'sr', 'ss', 'st', 'sv', 'sx', 'sy', 'sz', 'tc', 'td', 'tf', 'tg', 'th', 'tj', 'tk', 'tl',
-      'tm', 'tn', 'to', 'tr', 'tt', 'tv', 'tw', 'tz', 'ua', 'ug', 'um', 'us', 'uy', 'uz', 'va', 'vc', 've', 'vg', 'vi',
-      'vn', 'vu', 'wf', 'ws', 'xk', 'ye', 'yt', 'za', 'zm', 'zw'
+    const milkyway = document.getElementById('milkyway');
+    for (let i = 0; i < 200; i++) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      star.style.width = star.style.height = `${Math.random() * 2 + 1}px`;
+      star.style.left = `${Math.random() * 100}%`;
+      star.style.top = `${Math.random() * 100}%`;
+      star.style.animationDelay = `${Math.random() * 2}s`;
+      milkyway.appendChild(star);
+    }
+
+    const flagCodes = [
+      "ad", "ae", "af", "ag", "ai", "al", "am", "ao", "aq", "ar", "as", "at", "au", "aw", "ax", "az", "ba", "bb",
+      "bd", "be", "bf", "bg", "bh", "bi", "bj", "bl", "bm", "bn", "bo", "bq", "br", "bs", "bt", "bv", "bw", "by", "bz",
+      "ca", "cc", "cd", "cf", "cg", "ch", "ci", "ck", "cl", "cm", "cn", "co", "cr", "cu", "cv", "cw", "cx", "cy", "cz", "de",
+      "dj", "dk", "dm", "do", "dz", "ec", "ee", "eg", "eh", "er", "es", "et", "fi", "fj", "fk", "fm", "fo", "fr", "ga", "gb",
+      "gd", "ge", "gf", "gg", "gh", "gi", "gl", "gm", "gn", "gp", "gq", "gr", "gs", "gt", "gu", "gw", "gy", "hk", "hm", "hn",
+      "hr", "ht", "hu", "id", "ie", "il", "im", "in", "io", "iq", "ir", "is", "it", "je", "jm", "jo", "jp", "ke", "kg", "kh",
+      "ki", "km", "kn", "kp", "kr", "kw", "ky", "kz", "la", "lb", "lc", "li", "lk", "lr", "ls", "lt", "lu", "lv", "ly", "ma",
+      "mc", "md", "me", "mf", "mg", "mh", "mk", "ml", "mm", "mn", "mo", "mp", "mq", "mr", "ms", "mt", "mu", "mv", "mw", "mx",
+      "my", "mz", "na", "nc", "ne", "nf", "ng", "ni", "nl", "no", "np", "nr", "nu", "nz", "om", "pa", "pe", "pf", "pg", "ph",
+      "pk", "pl", "pm", "pn", "pr", "ps", "pt", "pw", "py", "qa", "re", "ro", "rs", "ru", "rw", "sa", "sb", "sc", "sd", "se",
+      "sg", "sh", "si", "sj", "sk", "sl", "sm", "sn", "so", "sr", "ss", "st", "sv", "sx", "sy", "sz", "tc", "td", "tf", "tg",
+      "th", "tj", "tk", "tl", "tm", "tn", "to", "tr", "tt", "tv", "tw", "tz", "ua", "ug", "um", "us", "uy", "uz", "va", "vc",
+      "ve", "vg", "vi", "vn", "vu", "wf", "ws", "xk", "ye", "yt", "za", "zm", "zw"
     ];
 
-    let current = 0;
+    let score = 0;
+    let currentAnswer = '';
 
-    function loadFlag() {
-      document.getElementById('flag').src = `flags/${questions[current]}.png`;
-      document.getElementById('answer').value = '';
-      document.getElementById('feedback').innerText = '';
+    function showMenu() {
+      document.getElementById('menu').style.display = 'block';
+      document.getElementById('game').style.display = 'none';
+      document.getElementById('result').innerText = '';
     }
 
-    function submitAnswer() {
-      const guess = document.getElementById('answer').value.trim().toLowerCase();
-      const correct = questions[current];
-      if (guess === correct) {
-        document.getElementById('feedback').innerText = '✅ Correct!';
-        current = (current + 1) % questions.length;
-        setTimeout(loadFlag, 1000);
+    function startGame(mode) {
+      document.getElementById('menu').style.display = 'none';
+      document.getElementById('game').style.display = 'block';
+      nextQuestion(mode);
+    }
+
+    function nextQuestion(mode) {
+      let questionText = '', options = [], correctAnswer = '';
+      if (mode === 'flags') {
+        const correctCode = flagCodes[Math.floor(Math.random() * flagCodes.length)];
+        correctAnswer = correctCode;
+        document.getElementById('flag-image').src = `flags/${correctCode}.png`;
+        document.getElementById('flag-image').style.display = 'block';
+        questionText = 'Which country does this flag belong to?';
+        options = shuffleArray([
+          correctCode,
+          ...shuffleArray(flagCodes.filter(code => code !== correctCode)).slice(0, 3)
+        ]);
+        currentAnswer = correctCode;
+      }
+
+      document.getElementById('question').innerText = questionText;
+      const optionsDiv = document.getElementById('options');
+      optionsDiv.innerHTML = '';
+      options.forEach(option => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.innerText = option.toUpperCase();
+        btn.onclick = () => checkAnswer(option);
+        optionsDiv.appendChild(btn);
+      });
+    }
+
+    function checkAnswer(choice) {
+      if (choice === currentAnswer) {
+        document.getElementById('result').innerText = 'Correct!';
+        score += 5;
       } else {
-        document.getElementById('feedback').innerText = '❌ Try again!';
+        document.getElementById('result').innerText = `Wrong! Answer was ${currentAnswer.toUpperCase()}`;
       }
+      document.getElementById('score').innerText = score;
+      setTimeout(() => nextQuestion('flags'), 1500);
     }
 
-    function createStars(num) {
-      const bg = document.getElementById('stars');
-      for (let i = 0; i < num; i++) {
-        const star = document.createElement('div');
-        star.className = 'star';
-        star.style.top = `${Math.random() * 100}vh`;
-        star.style.left = `${Math.random() * 100}vw`;
-        star.style.animationDelay = `${Math.random() * 5}s`;
-        star.style.opacity = Math.random();
-        bg.appendChild(star);
+    function shuffleArray(arr) {
+      let a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
       }
+      return a;
     }
-
-    window.onload = () => {
-      createStars(150);
-      loadFlag();
-    };
   </script>
 </body>
+
 </html>
