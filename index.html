@@ -98,10 +98,31 @@ body::before {
       transition: background 0.3s, color 0.3s;
       box-shadow: 0 0 12px #00ffffaa;
     }
-    button:hover {
+    button:hover:not(:disabled) {
       background: #0ff;
       color: black;
       box-shadow: 0 0 20px #00ffff;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      border-color: #666;
+      color: #666;
+      box-shadow: none;
+    }
+    .option-button.correct {
+      background: #00ff00;
+      color: black;
+      border-color: #00ff00;
+    }
+    .option-button.incorrect {
+      background: #ff0000;
+      color: white;
+      border-color: #ff0000;
+    }
+    .option-button.disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
     }
     .options {
       display: flex;
@@ -162,7 +183,8 @@ body::before {
     <div id="flag-container"></div>
     <div class="options" id="options"></div>
     <p id="feedback"></p>
-    <button onclick="nextQuestion()">Next</button>
+    <button id="next-btn" onclick="nextQuestion()" disabled>Next</button>
+    <button onclick="backToMenu()">Back to Main Menu</button>
   </div>
 
   <div id="store-screen" class="hidden">
@@ -378,6 +400,7 @@ body::before {
     let currentIndex = 0;
     let pennies = parseInt(localStorage.getItem("pennies")) || 0;
     const storePurchases = JSON.parse(localStorage.getItem("purchases") || "[]");
+    let questionAnswered = false;
 
     // Initialize pennies display in main menu:
     document.getElementById("pennies").textContent = pennies;
@@ -408,6 +431,10 @@ body::before {
       document.getElementById("feedback").textContent = "";
       document.getElementById("progress").textContent = `Question ${currentIndex + 1} of ${currentQuestions.length}`;
       
+      // Reset question state
+      questionAnswered = false;
+      document.getElementById("next-btn").disabled = true;
+      
       const optionsDiv = document.getElementById("options");
       optionsDiv.innerHTML = "";
       
@@ -427,7 +454,31 @@ body::before {
     }
 
     function selectAnswer(choice) {
+      if (questionAnswered) return; // Prevent multiple answers
+      
+      questionAnswered = true;
       const q = currentQuestions[currentIndex];
+      
+      // Disable all option buttons and highlight the selected answer
+      const optionButtons = document.querySelectorAll('.option-button');
+      optionButtons.forEach(btn => {
+        btn.classList.add('disabled');
+        btn.onclick = null; // Remove click handler
+        
+        if (btn.textContent === choice) {
+          if (choice === q.answer) {
+            btn.classList.add('correct');
+          } else {
+            btn.classList.add('incorrect');
+          }
+        }
+        
+        // Highlight the correct answer if wrong answer was selected
+        if (choice !== q.answer && btn.textContent === q.answer) {
+          btn.classList.add('correct');
+        }
+      });
+      
       if (choice === q.answer) {
         document.getElementById("feedback").textContent = "Correct! +1 penny";
         pennies++;
@@ -439,18 +490,29 @@ body::before {
       } else {
         document.getElementById("feedback").textContent = `Wrong! Answer was ${q.answer}`;
       }
+      
+      // Enable the Next button
+      document.getElementById("next-btn").disabled = false;
     }
 
     function nextQuestion() {
+      if (!questionAnswered) return; // Prevent advancing without answering
+      
       currentIndex++;
       if (currentIndex < currentQuestions.length) {
         showQuestion();
       } else {
         // Back to main menu after quiz
-        document.getElementById("question-screen").classList.add("hidden");
-        document.getElementById("main-menu").classList.remove("hidden");
-        renderStore();
+        backToMenu();
       }
+    }
+
+    // Function to go back to main menu
+    function backToMenu() {
+      document.getElementById("question-screen").classList.add("hidden");
+      document.getElementById("store-screen").classList.add("hidden");
+      document.getElementById("main-menu").classList.remove("hidden");
+      renderStore();
     }
 
     // Store functions
