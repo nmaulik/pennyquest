@@ -2,295 +2,154 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PennyQuest: A Sci-Fi Trivia Game</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flag Quiz Game</title>
   <style>
-    /* Milky Way background from https://css-tricks.com/animated-backgrounds-with-css/ */
     body {
       margin: 0;
-      font-family: 'Orbitron', monospace;
-      background:
-        radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
-      color: #00ffcc;
-      text-align: center;
-      padding: 2rem;
-      overflow-x: hidden;
-      position: relative;
-      min-height: 100vh;
-    }
-    /* Starfield animation */
-    body::before {
-      content: "";
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: transparent url('https://cdn.jsdelivr.net/gh/nmaulik/pennyquest/starfield.png') repeat;
-      animation: starfieldMove 200s linear infinite;
-      z-index: -1;
-      opacity: 0.6;
-    }
-    @keyframes starfieldMove {
-      0% {background-position: 0 0;}
-      100% {background-position: -10000px 5000px;}
+      font-family: 'Segoe UI', sans-serif;
+      color: white;
+      overflow: hidden;
     }
 
-    h1, h2, h3 {
-      text-shadow: 0 0 8px #0ff;
-      margin-bottom: 0.3em;
+    .background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+      overflow: hidden;
+      z-index: -1;
     }
-    .hidden {
-      display: none;
+
+    .star {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: white;
+      border-radius: 50%;
+      animation: twinkle 2s infinite ease-in-out;
     }
-    button {
-      font-family: 'Orbitron', monospace;
-      font-size: 1rem;
-      border-radius: 4px;
-      border: 2px solid #0ff;
-      background: transparent;
-      color: #0ff;
-      padding: 0.8em 1.2em;
-      margin: 0.3em;
-      cursor: pointer;
-      transition: background 0.3s, color 0.3s;
-      box-shadow: 0 0 12px #00ffffaa;
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.5); }
     }
-    button:hover {
-      background: #0ff;
-      color: black;
-      box-shadow: 0 0 20px #00ffff;
+
+    .container {
+      padding: 2rem;
+      text-align: center;
     }
-    .options {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 1em;
-      margin-top: 1em;
+
+    img {
+      max-height: 200px;
+      margin: 1rem 0;
+      border: 2px solid white;
     }
-    .option-button {
-      min-width: 120px;
-    }
-    img.flag {
-      width: 220px;
-      height: auto;
-      border: 2px solid #0ff;
-      box-shadow: 0 0 15px #0ff;
-      margin: 1rem auto;
-      display: block;
+
+    .store-link {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      padding: 0.5rem 1rem;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid white;
       border-radius: 8px;
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
     }
-    .store-item {
-      margin: 1em 0;
-      border: 1px solid #0ff;
-      padding: 0.7em;
-      border-radius: 6px;
-      max-width: 400px;
-      margin-left: auto;
-      margin-right: auto;
-      box-shadow: 0 0 8px #00ffccaa;
-      background: rgba(0,255,204,0.05);
+
+    input[type="text"] {
+      padding: 0.5rem;
+      border-radius: 5px;
+      border: none;
+      width: 200px;
     }
-    .store-item button {
-      margin-left: 1em;
+
+    button {
+      padding: 0.5rem 1rem;
+      margin-top: 1rem;
+      background-color: #2d3e50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <div id="main-menu">
-    <h1>PennyQuest</h1>
-    <h3>A 1970s Sci-Fi Trivia Game</h3>
-    <p>Pennies: <span id="pennies">0</span></p>
-    <h2>Select a Challenge</h2>
-    <button onclick="startGame('geography')">Geography</button>
-    <button onclick="startGame('flags')">Flags</button>
-    <button onclick="startGame('history')">History</button>
-    <br/>
-    <button onclick="showStore()">Go to Store</button>
-  </div>
-
-  <div id="question-screen" class="hidden">
-    <h2 id="question"></h2>
-    <div id="flag-container"></div>
-    <div class="options" id="options"></div>
-    <p id="feedback"></p>
-    <button onclick="nextQuestion()">Next</button>
-  </div>
-
-  <div id="store-screen" class="hidden">
-    <h2>Store</h2>
-    <p>Pennies: <span id="store-pennies"></span></p>
-    <div id="store"></div>
-    <button onclick="closeStore()">Back to Menu</button>
+  <div class="background" id="stars"></div>
+  <div class="container">
+    <a class="store-link" href="store.html">Go to Store</a>
+    <h1>Flag Quiz</h1>
+    <div id="quiz">
+      <img id="flag" src="" alt="Flag" />
+      <div>
+        <input type="text" id="answer" placeholder="Enter country name..." />
+        <br />
+        <button onclick="submitAnswer()">Submit</button>
+        <p id="feedback"></p>
+      </div>
+    </div>
   </div>
 
   <script>
-    // Questions object with lots of flag questions added:
-    const questions = {
-      geography: [
-        {
-          q: "Which country has the tallest waterfall in the world?",
-          options: ["Norway", "Venezuela", "USA", "India"],
-          answer: "Venezuela"
-        },
-        {
-          q: "Which country lists Wolof as a national language?",
-          options: ["Ghana", "Senegal", "Nigeria", "Cameroon"],
-          answer: "Senegal"
-        }
-      ],
-      flags: [
-        // Sample with all flag files listed with basic placeholder options and answers (you can customize later)
-        { img: "flags/ad.png", q: "Which country does this flag belong to?", options: ["Andorra", "Romania", "Moldova", "France"], answer: "Andorra" },
-        { img: "flags/ae.png", q: "Which country does this flag belong to?", options: ["Kuwait", "UAE", "Oman", "Bahrain"], answer: "UAE" },
-        { img: "flags/af.png", q: "Which country does this flag belong to?", options: ["Afghanistan", "Pakistan", "Iran", "Turkmenistan"], answer: "Afghanistan" },
-        { img: "flags/ag.png", q: "Which country does this flag belong to?", options: ["Antigua and Barbuda", "Barbados", "Jamaica", "Bahamas"], answer: "Antigua and Barbuda" },
-        { img: "flags/ai.png", q: "Which country does this flag belong to?", options: ["Anguilla", "Aruba", "Bermuda", "Cayman Islands"], answer: "Anguilla" },
-        { img: "flags/al.png", q: "Which country does this flag belong to?", options: ["Albania", "Kosovo", "Montenegro", "Serbia"], answer: "Albania" },
-        { img: "flags/am.png", q: "Which country does this flag belong to?", options: ["Armenia", "Azerbaijan", "Georgia", "Turkey"], answer: "Armenia" },
-        { img: "flags/ao.png", q: "Which country does this flag belong to?", options: ["Angola", "Mozambique", "Namibia", "Botswana"], answer: "Angola" },
-        { img: "flags/aq.png", q: "Which country does this flag belong to?", options: ["Antarctica", "Greenland", "Iceland", "Falkland Islands"], answer: "Antarctica" },
-        { img: "flags/ar.png", q: "Which country does this flag belong to?", options: ["Argentina", "Uruguay", "Paraguay", "Chile"], answer: "Argentina" },
-        // ... (Add as many as you want, this is a sample; you can extend the pattern for all files)
-      ],
-      history: [
-        {
-          q: "Which of these is an Ancient Wonder of the World?",
-          options: ["Eiffel Tower", "Statue of Zeus", "Great Wall", "Colosseum"],
-          answer: "Statue of Zeus"
-        },
-        {
-          q: "Which year did the Titanic sink?",
-          options: ["1912", "1920", "1905", "1898"],
-          answer: "1912"
-        }
-      ]
-    };
-
-    // Store items:
-    const storeItems = [
-      { name: "An Ice Cold Shmacking Orangina", cost: 10 },
-      { name: "An Indestructible, Apocalypse-proof, Quantum Supercomputer That Always Works", cost: 500 },
-      { name: "Bruno the Bernese Mountain Dog", cost: 1000 },
-      { name: "Seaside Irish Cottage", cost: 5000 }
+    const questions = [
+      'ad', 'ae', 'af', 'ag', 'ai', 'al', 'am', 'ao', 'aq', 'ar', 'as', 'at', 'au', 'aw', 'ax', 'az', 'ba', 'bb', 'bd',
+      'be', 'bf', 'bg', 'bh', 'bi', 'bj', 'bl', 'bm', 'bn', 'bo', 'bq', 'br', 'bs', 'bt', 'bv', 'bw', 'by', 'bz', 'ca',
+      'cc', 'cd', 'cf', 'cg', 'ch', 'ci', 'ck', 'cl', 'cm', 'cn', 'co', 'cr', 'cu', 'cv', 'cw', 'cx', 'cy', 'cz', 'de',
+      'dj', 'dk', 'dm', 'do', 'dz', 'ec', 'ee', 'eg', 'eh', 'er', 'es', 'et', 'fi', 'fj', 'fk', 'fm', 'fo', 'fr', 'ga',
+      'gb-eng', 'gb-nir', 'gb-sct', 'gb-wls', 'gb', 'gd', 'ge', 'gf', 'gg', 'gh', 'gi', 'gl', 'gm', 'gn', 'gp', 'gq',
+      'gr', 'gs', 'gt', 'gu', 'gw', 'gy', 'hk', 'hm', 'hn', 'hr', 'ht', 'hu', 'id', 'ie', 'il', 'im', 'in', 'io', 'iq',
+      'ir', 'is', 'it', 'je', 'jm', 'jo', 'jp', 'ke', 'kg', 'kh', 'ki', 'km', 'kn', 'kp', 'kr', 'kw', 'ky', 'kz', 'la',
+      'lb', 'lc', 'li', 'lk', 'lr', 'ls', 'lt', 'lu', 'lv', 'ly', 'ma', 'mc', 'md', 'me', 'mf', 'mg', 'mh', 'mk', 'ml',
+      'mm', 'mn', 'mo', 'mp', 'mq', 'mr', 'ms', 'mt', 'mu', 'mv', 'mw', 'mx', 'my', 'mz', 'na', 'nc', 'ne', 'nf', 'ng',
+      'ni', 'nl', 'no', 'np', 'nr', 'nu', 'nz', 'om', 'pa', 'pe', 'pf', 'pg', 'ph', 'pk', 'pl', 'pm', 'pn', 'pr', 'ps',
+      'pt', 'pw', 'py', 'qa', 're', 'ro', 'rs', 'ru', 'rw', 'sa', 'sb', 'sc', 'sd', 'se', 'sg', 'sh', 'si', 'sj', 'sk',
+      'sl', 'sm', 'sn', 'so', 'sr', 'ss', 'st', 'sv', 'sx', 'sy', 'sz', 'tc', 'td', 'tf', 'tg', 'th', 'tj', 'tk', 'tl',
+      'tm', 'tn', 'to', 'tr', 'tt', 'tv', 'tw', 'tz', 'ua', 'ug', 'um', 'us', 'uy', 'uz', 'va', 'vc', 've', 'vg', 'vi',
+      'vn', 'vu', 'wf', 'ws', 'xk', 'ye', 'yt', 'za', 'zm', 'zw'
     ];
 
-    let currentCategory = null;
-    let currentQuestions = [];
-    let currentIndex = 0;
-    let pennies = parseInt(localStorage.getItem("pennies")) || 0;
-    const storePurchases = JSON.parse(localStorage.getItem("purchases") || "[]");
+    let current = 0;
 
-    // Initialize pennies display in main menu:
-    document.getElementById("pennies").textContent = pennies;
-
-    // Render store in main menu store div (if you want to keep it, but now we have separate store screen)
-    // renderStore();
-
-    function startGame(category) {
-      currentCategory = category;
-      currentQuestions = [...questions[category]];
-      currentQuestions.sort(() => Math.random() - 0.5);
-      currentIndex = 0;
-      document.getElementById("main-menu").classList.add("hidden");
-      document.getElementById("store-screen").classList.add("hidden");
-      document.getElementById("question-screen").classList.remove("hidden");
-      showQuestion();
+    function loadFlag() {
+      document.getElementById('flag').src = `flags/${questions[current]}.png`;
+      document.getElementById('answer').value = '';
+      document.getElementById('feedback').innerText = '';
     }
 
-    function showQuestion() {
-      const q = currentQuestions[currentIndex];
-      document.getElementById("question").textContent = q.q;
-      document.getElementById("feedback").textContent = "";
-      const optionsDiv = document.getElementById("options");
-      optionsDiv.innerHTML = "";
-      if (q.img) {
-        document.getElementById("flag-container").innerHTML = `<img src="${q.img}" class="flag" alt="Flag">`;
+    function submitAnswer() {
+      const guess = document.getElementById('answer').value.trim().toLowerCase();
+      const correct = questions[current];
+      if (guess === correct) {
+        document.getElementById('feedback').innerText = '✅ Correct!';
+        current = (current + 1) % questions.length;
+        setTimeout(loadFlag, 1000);
       } else {
-        document.getElementById("flag-container").innerHTML = "";
-      }
-      q.options.forEach(opt => {
-        const btn = document.createElement("button");
-        btn.className = "option-button";
-        btn.textContent = opt;
-        btn.onclick = () => selectAnswer(opt);
-        optionsDiv.appendChild(btn);
-      });
-    }
-
-    function selectAnswer(choice) {
-      const q = currentQuestions[currentIndex];
-      if (choice === q.answer) {
-        document.getElementById("feedback").textContent = "Correct! +1 penny";
-        pennies++;
-        localStorage.setItem("pennies", pennies);
-        document.getElementById("pennies").textContent = pennies;
-        if (document.getElementById("store-pennies")) {
-          document.getElementById("store-pennies").textContent = pennies;
-        }
-      } else {
-        document.getElementById("feedback").textContent = `Wrong! Answer was ${q.answer}`;
+        document.getElementById('feedback').innerText = '❌ Try again!';
       }
     }
 
-    function nextQuestion() {
-      currentIndex++;
-      if (currentIndex < currentQuestions.length) {
-        showQuestion();
-      } else {
-        // Back to main menu after quiz
-        document.getElementById("question-screen").classList.add("hidden");
-        document.getElementById("main-menu").classList.remove("hidden");
-        renderStore();
+    function createStars(num) {
+      const bg = document.getElementById('stars');
+      for (let i = 0; i < num; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        star.style.top = `${Math.random() * 100}vh`;
+        star.style.left = `${Math.random() * 100}vw`;
+        star.style.animationDelay = `${Math.random() * 5}s`;
+        star.style.opacity = Math.random();
+        bg.appendChild(star);
       }
     }
 
-    // Store functions
-
-    function renderStore() {
-      const storeDiv = document.getElementById("store");
-      if (!storeDiv) return;
-      storeDiv.innerHTML = "";
-      storeItems.forEach(item => {
-        const owned = storePurchases.includes(item.name);
-        const div = document.createElement("div");
-        div.className = "store-item";
-        div.textContent = `${item.name} - ${item.cost} pennies${owned ? " (Owned)" : ""}`;
-        if (!owned && pennies >= item.cost) {
-          const btn = document.createElement("button");
-          btn.textContent = "Buy";
-          btn.onclick = () => buyItem(item);
-          div.appendChild(btn);
-        }
-        storeDiv.appendChild(div);
-      });
-    }
-
-    function buyItem(item) {
-      if(pennies >= item.cost){
-        pennies -= item.cost;
-        storePurchases.push(item.name);
-        localStorage.setItem("pennies", pennies);
-        localStorage.setItem("purchases", JSON.stringify(storePurchases));
-        document.getElementById("pennies").textContent = pennies;
-        if (document.getElementById("store-pennies")) {
-          document.getElementById("store-pennies").textContent = pennies;
-        }
-        renderStore();
-      }
-    }
-
-    // Show / hide store screen
-    function showStore() {
-      document.getElementById("main-menu").classList.add("hidden");
-      document.getElementById("question-screen").classList.add("hidden");
-      document.getElementById("store-screen").classList.remove("hidden");
-      document.getElementById("store-pennies").textContent = pennies;
-      renderStore();
-    }
-
-    function closeStore() {
-      document.getElementById("store-screen").classList.add("hidden");
-      document.getElementById("main-menu").classList.remove("hidden");
-    }
+    window.onload = () => {
+      createStars(150);
+      loadFlag();
+    };
   </script>
 </body>
 </html>
