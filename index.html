@@ -2,23 +2,62 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PennyQuest: A Sci-Fi Trivia Game</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet" />
   <style>
+    /* Milky Way background from https://css-tricks.com/animated-backgrounds-with-css/ */
     body {
       margin: 0;
       font-family: 'Orbitron', monospace;
-      background: black;
+      background:
+        radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
       color: #00ffcc;
       text-align: center;
       padding: 2rem;
+      overflow-x: hidden;
+      position: relative;
+      min-height: 100vh;
     }
+    /* Starfield animation */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: transparent url('https://cdn.jsdelivr.net/gh/nmaulik/pennyquest/starfield.png') repeat;
+      animation: starfieldMove 200s linear infinite;
+      z-index: -1;
+      opacity: 0.6;
+    }
+    @keyframes starfieldMove {
+      0% {background-position: 0 0;}
+      100% {background-position: -10000px 5000px;}
+    }
+
     h1, h2, h3 {
-      text-shadow: 0 0 4px #0ff;
+      text-shadow: 0 0 8px #0ff;
+      margin-bottom: 0.3em;
     }
     .hidden {
       display: none;
+    }
+    button {
+      font-family: 'Orbitron', monospace;
+      font-size: 1rem;
+      border-radius: 4px;
+      border: 2px solid #0ff;
+      background: transparent;
+      color: #0ff;
+      padding: 0.8em 1.2em;
+      margin: 0.3em;
+      cursor: pointer;
+      transition: background 0.3s, color 0.3s;
+      box-shadow: 0 0 12px #00ffffaa;
+    }
+    button:hover {
+      background: #0ff;
+      color: black;
+      box-shadow: 0 0 20px #00ffff;
     }
     .options {
       display: flex;
@@ -28,25 +67,30 @@
       margin-top: 1em;
     }
     .option-button {
-      background: transparent;
-      color: #0ff;
-      border: 2px solid #0ff;
-      padding: 1em;
-      cursor: pointer;
-      transition: background 0.3s;
+      min-width: 120px;
     }
-    .option-button:hover {
-      background: #0ff;
-      color: black;
+    img.flag {
+      width: 220px;
+      height: auto;
+      border: 2px solid #0ff;
+      box-shadow: 0 0 15px #0ff;
+      margin: 1rem auto;
+      display: block;
+      border-radius: 8px;
     }
     .store-item {
       margin: 1em 0;
+      border: 1px solid #0ff;
+      padding: 0.7em;
+      border-radius: 6px;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+      box-shadow: 0 0 8px #00ffccaa;
+      background: rgba(0,255,204,0.05);
     }
-    img.flag {
-      width: 200px;
-      height: auto;
-      border: 2px solid #0ff;
-      box-shadow: 0 0 10px #0ff;
+    .store-item button {
+      margin-left: 1em;
     }
   </style>
 </head>
@@ -59,8 +103,8 @@
     <button onclick="startGame('geography')">Geography</button>
     <button onclick="startGame('flags')">Flags</button>
     <button onclick="startGame('history')">History</button>
-    <h2>Store</h2>
-    <div id="store"></div>
+    <br/>
+    <button onclick="showStore()">Go to Store</button>
   </div>
 
   <div id="question-screen" class="hidden">
@@ -71,7 +115,15 @@
     <button onclick="nextQuestion()">Next</button>
   </div>
 
+  <div id="store-screen" class="hidden">
+    <h2>Store</h2>
+    <p>Pennies: <span id="store-pennies"></span></p>
+    <div id="store"></div>
+    <button onclick="closeStore()">Back to Menu</button>
+  </div>
+
   <script>
+    // Questions object with lots of flag questions added:
     const questions = {
       geography: [
         {
@@ -86,24 +138,18 @@
         }
       ],
       flags: [
-        {
-          img: "flags/ad.png",
-          q: "Which country does this flag belong to?",
-          options: ["Andorra", "Romania", "Moldova", "France"],
-          answer: "Andorra"
-        },
-        {
-          img: "flags/ae.png",
-          q: "Which country does this flag belong to?",
-          options: ["Kuwait", "UAE", "Oman", "Bahrain"],
-          answer: "UAE"
-        },
-        {
-          img: "flags/af.png",
-          q: "Which country does this flag belong to?",
-          options: ["Afghanistan", "Pakistan", "Iran", "Turkmenistan"],
-          answer: "Afghanistan"
-        }
+        // Sample with all flag files listed with basic placeholder options and answers (you can customize later)
+        { img: "flags/ad.png", q: "Which country does this flag belong to?", options: ["Andorra", "Romania", "Moldova", "France"], answer: "Andorra" },
+        { img: "flags/ae.png", q: "Which country does this flag belong to?", options: ["Kuwait", "UAE", "Oman", "Bahrain"], answer: "UAE" },
+        { img: "flags/af.png", q: "Which country does this flag belong to?", options: ["Afghanistan", "Pakistan", "Iran", "Turkmenistan"], answer: "Afghanistan" },
+        { img: "flags/ag.png", q: "Which country does this flag belong to?", options: ["Antigua and Barbuda", "Barbados", "Jamaica", "Bahamas"], answer: "Antigua and Barbuda" },
+        { img: "flags/ai.png", q: "Which country does this flag belong to?", options: ["Anguilla", "Aruba", "Bermuda", "Cayman Islands"], answer: "Anguilla" },
+        { img: "flags/al.png", q: "Which country does this flag belong to?", options: ["Albania", "Kosovo", "Montenegro", "Serbia"], answer: "Albania" },
+        { img: "flags/am.png", q: "Which country does this flag belong to?", options: ["Armenia", "Azerbaijan", "Georgia", "Turkey"], answer: "Armenia" },
+        { img: "flags/ao.png", q: "Which country does this flag belong to?", options: ["Angola", "Mozambique", "Namibia", "Botswana"], answer: "Angola" },
+        { img: "flags/aq.png", q: "Which country does this flag belong to?", options: ["Antarctica", "Greenland", "Iceland", "Falkland Islands"], answer: "Antarctica" },
+        { img: "flags/ar.png", q: "Which country does this flag belong to?", options: ["Argentina", "Uruguay", "Paraguay", "Chile"], answer: "Argentina" },
+        // ... (Add as many as you want, this is a sample; you can extend the pattern for all files)
       ],
       history: [
         {
@@ -119,6 +165,7 @@
       ]
     };
 
+    // Store items:
     const storeItems = [
       { name: "An Ice Cold Shmacking Orangina", cost: 10 },
       { name: "An Indestructible, Apocalypse-proof, Quantum Supercomputer That Always Works", cost: 500 },
@@ -132,8 +179,11 @@
     let pennies = parseInt(localStorage.getItem("pennies")) || 0;
     const storePurchases = JSON.parse(localStorage.getItem("purchases") || "[]");
 
+    // Initialize pennies display in main menu:
     document.getElementById("pennies").textContent = pennies;
-    renderStore();
+
+    // Render store in main menu store div (if you want to keep it, but now we have separate store screen)
+    // renderStore();
 
     function startGame(category) {
       currentCategory = category;
@@ -141,6 +191,7 @@
       currentQuestions.sort(() => Math.random() - 0.5);
       currentIndex = 0;
       document.getElementById("main-menu").classList.add("hidden");
+      document.getElementById("store-screen").classList.add("hidden");
       document.getElementById("question-screen").classList.remove("hidden");
       showQuestion();
     }
@@ -152,7 +203,7 @@
       const optionsDiv = document.getElementById("options");
       optionsDiv.innerHTML = "";
       if (q.img) {
-        document.getElementById("flag-container").innerHTML = `<img src="${q.img}" class="flag">`;
+        document.getElementById("flag-container").innerHTML = `<img src="${q.img}" class="flag" alt="Flag">`;
       } else {
         document.getElementById("flag-container").innerHTML = "";
       }
@@ -172,6 +223,9 @@
         pennies++;
         localStorage.setItem("pennies", pennies);
         document.getElementById("pennies").textContent = pennies;
+        if (document.getElementById("store-pennies")) {
+          document.getElementById("store-pennies").textContent = pennies;
+        }
       } else {
         document.getElementById("feedback").textContent = `Wrong! Answer was ${q.answer}`;
       }
@@ -182,14 +236,18 @@
       if (currentIndex < currentQuestions.length) {
         showQuestion();
       } else {
+        // Back to main menu after quiz
         document.getElementById("question-screen").classList.add("hidden");
         document.getElementById("main-menu").classList.remove("hidden");
         renderStore();
       }
     }
 
+    // Store functions
+
     function renderStore() {
       const storeDiv = document.getElementById("store");
+      if (!storeDiv) return;
       storeDiv.innerHTML = "";
       storeItems.forEach(item => {
         const owned = storePurchases.includes(item.name);
@@ -207,12 +265,31 @@
     }
 
     function buyItem(item) {
-      pennies -= item.cost;
-      storePurchases.push(item.name);
-      localStorage.setItem("pennies", pennies);
-      localStorage.setItem("purchases", JSON.stringify(storePurchases));
-      document.getElementById("pennies").textContent = pennies;
+      if(pennies >= item.cost){
+        pennies -= item.cost;
+        storePurchases.push(item.name);
+        localStorage.setItem("pennies", pennies);
+        localStorage.setItem("purchases", JSON.stringify(storePurchases));
+        document.getElementById("pennies").textContent = pennies;
+        if (document.getElementById("store-pennies")) {
+          document.getElementById("store-pennies").textContent = pennies;
+        }
+        renderStore();
+      }
+    }
+
+    // Show / hide store screen
+    function showStore() {
+      document.getElementById("main-menu").classList.add("hidden");
+      document.getElementById("question-screen").classList.add("hidden");
+      document.getElementById("store-screen").classList.remove("hidden");
+      document.getElementById("store-pennies").textContent = pennies;
       renderStore();
+    }
+
+    function closeStore() {
+      document.getElementById("store-screen").classList.add("hidden");
+      document.getElementById("main-menu").classList.remove("hidden");
     }
   </script>
 </body>
