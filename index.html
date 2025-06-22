@@ -162,6 +162,20 @@ body::before {
       color: #0ff;
       font-size: 1.1em;
     }
+    .button-controls {
+      text-align: center;
+      margin-top: 2em;
+    }
+    .button-controls button {
+      display: block;
+      margin: 0.5em auto;
+    }
+    .auto-advance-notice {
+      color: #ffff00;
+      font-size: 1.1em;
+      margin: 1em 0;
+      text-shadow: 0 0 8px #ffff00;
+    }
   </style>
 </head>
 <body>
@@ -183,8 +197,11 @@ body::before {
     <div id="flag-container"></div>
     <div class="options" id="options"></div>
     <p id="feedback"></p>
-    <button id="next-btn" onclick="nextQuestion()" disabled>Next</button>
-    <button onclick="backToMenu()">Back to Main Menu</button>
+    <div id="auto-advance-notice" class="auto-advance-notice hidden"></div>
+    <div class="button-controls">
+      <button id="next-btn" onclick="nextQuestion()" disabled>Next</button>
+      <button onclick="backToMenu()">Back to Main Menu</button>
+    </div>
   </div>
 
   <div id="store-screen" class="hidden">
@@ -401,6 +418,8 @@ body::before {
     let pennies = parseInt(localStorage.getItem("pennies")) || 0;
     const storePurchases = JSON.parse(localStorage.getItem("purchases") || "[]");
     let questionAnswered = false;
+    let autoAdvanceTimer = null;
+    let countdownTimer = null;
 
     // Initialize pennies display in main menu:
     document.getElementById("pennies").textContent = pennies;
@@ -429,7 +448,18 @@ body::before {
       const q = currentQuestions[currentIndex];
       document.getElementById("question").textContent = q.q;
       document.getElementById("feedback").textContent = "";
+      document.getElementById("auto-advance-notice").classList.add("hidden");
       document.getElementById("progress").textContent = `Question ${currentIndex + 1} of ${currentQuestions.length}`;
+      
+      // Clear any existing timers
+      if (autoAdvanceTimer) {
+        clearTimeout(autoAdvanceTimer);
+        autoAdvanceTimer = null;
+      }
+      if (countdownTimer) {
+        clearInterval(countdownTimer);
+        countdownTimer = null;
+      }
       
       // Reset question state
       questionAnswered = false;
@@ -493,10 +523,48 @@ body::before {
       
       // Enable the Next button
       document.getElementById("next-btn").disabled = false;
+      
+      // Start auto-advance countdown
+      startAutoAdvance();
+    }
+
+    function startAutoAdvance() {
+      let timeLeft = 5;
+      const noticeElement = document.getElementById("auto-advance-notice");
+      
+      // Show the notice immediately
+      noticeElement.classList.remove("hidden");
+      noticeElement.textContent = `Moving on to the next question in ${timeLeft} seconds`;
+      
+      // Update countdown every second
+      countdownTimer = setInterval(() => {
+        timeLeft--;
+        if (timeLeft > 0) {
+          noticeElement.textContent = `Moving on to the next question in ${timeLeft} seconds`;
+        } else {
+          clearInterval(countdownTimer);
+          countdownTimer = null;
+        }
+      }, 1000);
+      
+      // Auto-advance after 5 seconds
+      autoAdvanceTimer = setTimeout(() => {
+        nextQuestion();
+      }, 5000);
     }
 
     function nextQuestion() {
       if (!questionAnswered) return; // Prevent advancing without answering
+      
+      // Clear timers when manually advancing
+      if (autoAdvanceTimer) {
+        clearTimeout(autoAdvanceTimer);
+        autoAdvanceTimer = null;
+      }
+      if (countdownTimer) {
+        clearInterval(countdownTimer);
+        countdownTimer = null;
+      }
       
       currentIndex++;
       if (currentIndex < currentQuestions.length) {
@@ -509,6 +577,16 @@ body::before {
 
     // Function to go back to main menu
     function backToMenu() {
+      // Clear any running timers
+      if (autoAdvanceTimer) {
+        clearTimeout(autoAdvanceTimer);
+        autoAdvanceTimer = null;
+      }
+      if (countdownTimer) {
+        clearInterval(countdownTimer);
+        countdownTimer = null;
+      }
+      
       document.getElementById("question-screen").classList.add("hidden");
       document.getElementById("store-screen").classList.add("hidden");
       document.getElementById("main-menu").classList.remove("hidden");
