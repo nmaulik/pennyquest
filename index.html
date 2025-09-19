@@ -77,7 +77,6 @@ body::before {
   to {background-position: -1000px -1000px;}
 }
 
-
     h1, h2, h3 {
       text-shadow: 0 0 8px #0ff;
       margin-bottom: 0.3em;
@@ -176,6 +175,112 @@ body::before {
       margin: 1em 0;
       text-shadow: 0 0 8px #ffff00;
     }
+    .streak-display {
+      color: #ffaa00;
+      font-size: 1.2em;
+      margin: 0.5em 0;
+      text-shadow: 0 0 8px #ffaa00;
+    }
+    .bonus-display {
+      color: #00ff00;
+      font-size: 1.1em;
+      margin: 0.5em 0;
+      text-shadow: 0 0 8px #00ff00;
+    }
+    .bruno-animation {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1000;
+      text-align: center;
+      color: #fff;
+      font-size: 2em;
+      text-shadow: 0 0 20px #fff;
+      animation: brunoAppear 3s ease-in-out;
+    }
+    @keyframes brunoAppear {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+      30% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+      70% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    }
+    .nebula-bg {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(circle at center, 
+        rgba(138, 43, 226, 0.3) 0%, 
+        rgba(75, 0, 130, 0.2) 30%, 
+        rgba(25, 25, 112, 0.1) 60%, 
+        transparent 100%);
+      z-index: 999;
+      animation: nebulaPulse 3s ease-in-out;
+    }
+    @keyframes nebulaPulse {
+      0%, 100% { opacity: 0; }
+      50% { opacity: 1; }
+    }
+    .data-analysis {
+      max-width: 600px;
+      margin: 0 auto;
+      text-align: left;
+    }
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      margin: 0.5em 0;
+      padding: 0.5em;
+      border: 1px solid #0ff;
+      border-radius: 4px;
+      background: rgba(0,255,204,0.05);
+    }
+    .completion-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #000;
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffff00;
+      font-size: 2em;
+      text-align: center;
+      animation: flashAndFade 2s ease-in-out;
+    }
+    @keyframes flashAndFade {
+      0% { background: #fff; }
+      10% { background: #000; }
+      100% { background: #000; }
+    }
+    .outro-text {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #ffff00;
+      font-size: 1.5em;
+      text-align: center;
+      z-index: 2001;
+      max-width: 80%;
+      line-height: 1.5;
+      text-shadow: 0 0 20px #ffff00;
+      animation: starWarsScroll 8s ease-in-out;
+    }
+    @keyframes starWarsScroll {
+      0% { opacity: 0; transform: translate(-50%, 100%); }
+      20% { opacity: 1; transform: translate(-50%, -50%); }
+      80% { opacity: 1; transform: translate(-50%, -50%); }
+      100% { opacity: 0; transform: translate(-50%, -200%); }
+    }
+    .skip-button {
+      background: #ff6600;
+      border-color: #ff6600;
+      color: white;
+    }
+    .skip-button:hover {
+      background: #ff8833;
+      border-color: #ff8833;
+    }
   </style>
 </head>
 <body>
@@ -183,12 +288,16 @@ body::before {
     <h1>PennyQuest</h1>
     <h3>A 1970s Sci-Fi Trivia Game</h3>
     <p>Pennies: <span id="pennies">0</span></p>
+    <div class="streak-display" id="streak-display"></div>
+    <div class="bonus-display" id="bonus-display"></div>
     <h2>Select a Challenge</h2>
     <button onclick="startGame('geography')">Geography</button>
     <button onclick="startGame('flags')">Flags</button>
     <button onclick="startGame('history')">History</button>
+    <button onclick="startGame('survival')">🚀 Survival Mode</button>
     <br/>
     <button onclick="showStore()">Go to Store</button>
+    <button id="data-analysis-btn" onclick="showDataAnalysis()" class="hidden">📊 Data Analysis</button>
   </div>
 
   <div id="question-screen" class="hidden">
@@ -199,6 +308,7 @@ body::before {
     <p id="feedback"></p>
     <div id="auto-advance-notice" class="auto-advance-notice hidden"></div>
     <div class="button-controls">
+      <button id="skip-btn" class="skip-button hidden" onclick="skipQuestion()">🔧 Hack Skip</button>
       <button id="next-btn" onclick="nextQuestion()" disabled>Next</button>
       <button onclick="backToMenu()">Back to Main Menu</button>
     </div>
@@ -209,6 +319,12 @@ body::before {
     <p>Pennies: <span id="store-pennies"></span></p>
     <div id="store"></div>
     <button onclick="closeStore()">Back to Menu</button>
+  </div>
+
+  <div id="data-analysis-screen" class="hidden">
+    <h2>📊 Data Analysis</h2>
+    <div class="data-analysis" id="data-analysis-content"></div>
+    <button onclick="closeDataAnalysis()">Back to Menu</button>
   </div>
 
   <script>
@@ -290,7 +406,8 @@ body::before {
           img: `flags/${code}.png`,
           q: "Which country does this flag belong to?",
           options,
-          answer: correctAnswer
+          answer: correctAnswer,
+          category: 'flags'
         };
       });
     }
@@ -301,52 +418,62 @@ body::before {
         {
           q: "Which country has the tallest waterfall in the world?",
           options: ["Norway", "Venezuela", "USA", "India"],
-          answer: "Venezuela"
+          answer: "Venezuela",
+          category: 'geography'
         },
         {
           q: "Which country lists Wolof as a national language?",
           options: ["Ghana", "Senegal", "Nigeria", "Cameroon"],
-          answer: "Senegal"
+          answer: "Senegal",
+          category: 'geography'
         },
         {
           q: "What is the capital of Australia?",
           options: ["Sydney", "Melbourne", "Canberra", "Perth"],
-          answer: "Canberra"
+          answer: "Canberra",
+          category: 'geography'
         },
         {
           q: "Which desert is the largest in the world?",
           options: ["Sahara", "Gobi", "Arabian", "Antarctica"],
-          answer: "Antarctica"
+          answer: "Antarctica",
+          category: 'geography'
         },
         {
           q: "Which river is the longest in the world?",
           options: ["Amazon", "Nile", "Yangtze", "Mississippi"],
-          answer: "Nile"
+          answer: "Nile",
+          category: 'geography'
         },
         {
           q: "Which country has the most time zones?",
           options: ["Russia", "USA", "China", "France"],
-          answer: "France"
+          answer: "France",
+          category: 'geography'
         },
         {
           q: "What is the smallest country in the world?",
           options: ["Monaco", "Vatican City", "San Marino", "Liechtenstein"],
-          answer: "Vatican City"
+          answer: "Vatican City",
+          category: 'geography'
         },
         {
           q: "Which mountain range contains Mount Everest?",
           options: ["Andes", "Alps", "Himalayas", "Rockies"],
-          answer: "Himalayas"
+          answer: "Himalayas",
+          category: 'geography'
         },
         {
           q: "Which country is known as the Land of the Rising Sun?",
           options: ["China", "Japan", "Thailand", "South Korea"],
-          answer: "Japan"
+          answer: "Japan",
+          category: 'geography'
         },
         {
           q: "What is the deepest ocean trench?",
           options: ["Puerto Rico Trench", "Mariana Trench", "Java Trench", "Peru-Chile Trench"],
-          answer: "Mariana Trench"
+          answer: "Mariana Trench",
+          category: 'geography'
         }
       ],
       flags: [], // Will be populated dynamically
@@ -354,63 +481,73 @@ body::before {
         {
           q: "Which of these is an Ancient Wonder of the World?",
           options: ["Eiffel Tower", "Statue of Zeus", "Great Wall", "Colosseum"],
-          answer: "Statue of Zeus"
+          answer: "Statue of Zeus",
+          category: 'history'
         },
         {
           q: "Which year did the Titanic sink?",
           options: ["1912", "1920", "1905", "1898"],
-          answer: "1912"
+          answer: "1912",
+          category: 'history'
         },
         {
           q: "Who was the first person to walk on the moon?",
           options: ["Buzz Aldrin", "Neil Armstrong", "John Glenn", "Alan Shepard"],
-          answer: "Neil Armstrong"
+          answer: "Neil Armstrong",
+          category: 'history'
         },
         {
           q: "Which empire was ruled by Julius Caesar?",
           options: ["Greek", "Roman", "Byzantine", "Persian"],
-          answer: "Roman"
+          answer: "Roman",
+          category: 'history'
         },
         {
           q: "In which year did World War II end?",
           options: ["1944", "1945", "1946", "1947"],
-          answer: "1945"
+          answer: "1945",
+          category: 'history'
         },
         {
           q: "Which ancient civilization built Machu Picchu?",
           options: ["Aztec", "Maya", "Inca", "Olmec"],
-          answer: "Inca"
+          answer: "Inca",
+          category: 'history'
         },
         {
           q: "Who painted the Mona Lisa?",
           options: ["Michelangelo", "Leonardo da Vinci", "Rafael", "Donatello"],
-          answer: "Leonardo da Vinci"
+          answer: "Leonardo da Vinci",
+          category: 'history'
         },
         {
           q: "Which country was NOT part of the original Axis powers in WWII?",
           options: ["Germany", "Italy", "Japan", "Spain"],
-          answer: "Spain"
+          answer: "Spain",
+          category: 'history'
         },
         {
           q: "The Berlin Wall fell in which year?",
           options: ["1987", "1989", "1991", "1993"],
-          answer: "1989"
+          answer: "1989",
+          category: 'history'
         },
         {
           q: "Which pharaoh built the Great Pyramid of Giza?",
           options: ["Tutankhamun", "Ramesses II", "Khufu", "Cleopatra"],
-          answer: "Khufu"
+          answer: "Khufu",
+          category: 'history'
         }
       ]
     };
 
     // Store items:
     const storeItems = [
-      { name: "An Ice Cold Shmacking Orangina", cost: 10 },
-      { name: "Bruno the Bernese Mountain Dog", cost: 100 },
-      { name: "An Indestructible, Apocalypse-proof, Quantum Supercomputer That Always Works", cost: 500 },
-      { name: "A Perfectly Purple Porsche 911 Turbo", cost: 1000 },
-      { name: "Seaside Irish Cottage", cost: 5000 },
+      { name: "An Ice Cold Shmacking Orangina", cost: 100 },
+      { name: "Bruno the Bernese Mountain Dog", cost: 500 },
+      { name: "An Indestructible, Apocalypse-proof, Quantum Supercomputer That Always Works", cost: 1000 },
+      { name: "A Perfectly Purple Porsche 911 Turbo", cost: 5000 },
+      { name: "Seaside Irish Cottage", cost: 10000 },
       { name: "The Answer to the Ultimate Question of Life, the Universe, and Everything", cost: 42000 }
     ];
 
@@ -422,26 +559,165 @@ body::before {
     let questionAnswered = false;
     let autoAdvanceTimer = null;
     let countdownTimer = null;
+    let gameStats = JSON.parse(localStorage.getItem("gameStats") || "{}");
+    let currentStreak = 0;
+    let isSurvivalMode = false;
+    let usedSkipToday = JSON.parse(localStorage.getItem("usedSkipToday") || "{}");
+    let usedBrunoInRound = false;
+    let usedPorscheInRound = false;
+    let oranginaUsedToday = false;
+    let gameCompletedToday = false;
 
-    // Initialize pennies display in main menu:
-    document.getElementById("pennies").textContent = pennies;
+    // Initialize game
+    initializeGame();
+
+    function initializeGame() {
+      updateStreak();
+      updateDisplay();
+      checkDailyReset();
+      
+      // Check if supercomputer is owned to show data analysis button
+      if (storePurchases.includes("An Indestructible, Apocalypse-proof, Quantum Supercomputer That Always Works")) {
+        document.getElementById("data-analysis-btn").classList.remove("hidden");
+      }
+
+      // Check if the ultimate answer has been purchased
+      if (storePurchases.includes("The Answer to the Ultimate Question of Life, the Universe, and Everything")) {
+        showGameCompletion();
+      }
+    }
+
+    function checkDailyReset() {
+      const today = new Date().toDateString();
+      const lastPlayDate = localStorage.getItem("lastPlayDate");
+      
+      if (lastPlayDate !== today) {
+        // Reset daily items
+        usedSkipToday = {};
+        oranginaUsedToday = false;
+        gameCompletedToday = false;
+        localStorage.setItem("usedSkipToday", JSON.stringify(usedSkipToday));
+      }
+    }
+
+    function updateStreak() {
+      const today = new Date().toDateString();
+      const lastPlayDate = localStorage.getItem("lastPlayDate");
+      const streakCount = parseInt(localStorage.getItem("streakCount") || "0");
+      const cottageOwned = storePurchases.includes("Seaside Irish Cottage");
+      
+      if (lastPlayDate) {
+        const lastDate = new Date(lastPlayDate);
+        const currentDate = new Date(today);
+        const diffTime = currentDate - lastDate;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 1) {
+          // Consecutive day
+          currentStreak = streakCount;
+        } else if (diffDays > 1) {
+          // Missed days
+          if (cottageOwned && diffDays === 2) {
+            // Cottage saves streak for 1 missed day
+            currentStreak = streakCount;
+          } else {
+            currentStreak = 0;
+          }
+        } else {
+          // Same day
+          currentStreak = streakCount;
+        }
+      } else {
+        currentStreak = 0;
+      }
+    }
+
+    function updateDisplay() {
+      document.getElementById("pennies").textContent = pennies;
+      
+      if (currentStreak > 0) {
+        document.getElementById("streak-display").textContent = `🔥 ${currentStreak} Day Streak`;
+        document.getElementById("streak-display").style.display = "block";
+      } else {
+        document.getElementById("streak-display").style.display = "none";
+      }
+      
+      // Check for daily bonus
+      const today = new Date().toDateString();
+      const lastPlayDate = localStorage.getItem("lastPlayDate");
+      if (!gameCompletedToday && lastPlayDate !== today) {
+        const bonusAmount = Math.max(1, currentStreak);
+        document.getElementById("bonus-display").textContent = `💰 Daily Bonus: ${bonusAmount} pennies available`;
+        document.getElementById("bonus-display").style.display = "block";
+      } else {
+        document.getElementById("bonus-display").style.display = "none";
+      }
+    }
+
+    function awardDailyBonus() {
+      const today = new Date().toDateString();
+      const lastPlayDate = localStorage.getItem("lastPlayDate");
+      
+      if (!gameCompletedToday && lastPlayDate !== today) {
+        const bonusAmount = Math.max(1, currentStreak);
+        let multiplier = 1;
+        
+        // Check for Orangina triple bonus
+        if (storePurchases.includes("An Ice Cold Shmacking Orangina") && !oranginaUsedToday) {
+          multiplier = 3;
+          oranginaUsedToday = true;
+          document.getElementById("feedback").innerHTML += "<br>🍊 Orangina Refreshment Boost: Triple pennies!";
+        }
+        
+        pennies += bonusAmount * multiplier;
+        currentStreak++;
+        gameCompletedToday = true;
+        
+        localStorage.setItem("pennies", pennies);
+        localStorage.setItem("streakCount", currentStreak);
+        localStorage.setItem("lastPlayDate", today);
+        
+        updateDisplay();
+      }
+    }
+
+    function recordGameStats(category, correct, total) {
+      if (!gameStats[category]) {
+        gameStats[category] = { correct: 0, total: 0, successRate: 0 };
+      }
+      
+      gameStats[category].correct += correct;
+      gameStats[category].total += total;
+      gameStats[category].successRate = Math.round((gameStats[category].correct / gameStats[category].total) * 100);
+      
+      localStorage.setItem("gameStats", JSON.stringify(gameStats));
+    }
 
     function startGame(category) {
       currentCategory = category;
+      usedBrunoInRound = false;
+      usedPorscheInRound = false;
+      isSurvivalMode = (category === 'survival');
       
-      // Generate flag questions dynamically if flags category is selected
-      if (category === 'flags') {
+      if (category === 'survival') {
+        // Combine all questions for survival mode
+        let allQuestions = [...questions.geography, ...questions.history];
+        // Add flag questions
+        allQuestions = allQuestions.concat(generateFlagQuestions(20));
+        currentQuestions = shuffle(allQuestions);
+        currentQuestions = currentQuestions.slice(0, 50); // Limit to 50 questions max
+      } else if (category === 'flags') {
         currentQuestions = generateFlagQuestions(10);
       } else {
         currentQuestions = [...questions[category]];
         currentQuestions.sort(() => Math.random() - 0.5);
-        // Limit other categories to 10 questions as well
         currentQuestions = currentQuestions.slice(0, 10);
       }
       
       currentIndex = 0;
       document.getElementById("main-menu").classList.add("hidden");
       document.getElementById("store-screen").classList.add("hidden");
+      document.getElementById("data-analysis-screen").classList.add("hidden");
       document.getElementById("question-screen").classList.remove("hidden");
       showQuestion();
     }
@@ -451,7 +727,26 @@ body::before {
       document.getElementById("question").textContent = q.q;
       document.getElementById("feedback").textContent = "";
       document.getElementById("auto-advance-notice").classList.add("hidden");
-      document.getElementById("progress").textContent = `Question ${currentIndex + 1} of ${currentQuestions.length}`;
+      
+      // Show progress
+      if (isSurvivalMode) {
+        document.getElementById("progress").textContent = `Survival Mode - Question ${currentIndex + 1}`;
+      } else {
+        document.getElementById("progress").textContent = `Question ${currentIndex + 1} of ${currentQuestions.length}`;
+      }
+      
+      // Show skip button if supercomputer is owned and not used today (or in current survival game)
+      const supercomputerOwned = storePurchases.includes("An Indestructible, Apocalypse-proof, Quantum Supercomputer That Always Works");
+      const canSkip = supercomputerOwned && (
+        (isSurvivalMode && !usedSkipToday.survival) ||
+        (!isSurvivalMode && !usedSkipToday.regular)
+      );
+      
+      if (canSkip) {
+        document.getElementById("skip-btn").classList.remove("hidden");
+      } else {
+        document.getElementById("skip-btn").classList.add("hidden");
+      }
       
       // Clear any existing timers
       if (autoAdvanceTimer) {
@@ -485,60 +780,167 @@ body::before {
       });
     }
 
+    function skipQuestion() {
+      if (isSurvivalMode) {
+        usedSkipToday.survival = true;
+      } else {
+        usedSkipToday.regular = true;
+      }
+      localStorage.setItem("usedSkipToday", JSON.stringify(usedSkipToday));
+      
+      document.getElementById("feedback").textContent = "🔧 Question hacked and skipped!";
+      document.getElementById("skip-btn").classList.add("hidden");
+      
+      // Mark as answered and enable next
+      questionAnswered = true;
+      document.getElementById("next-btn").disabled = false;
+      
+      // Disable option buttons
+      const optionButtons = document.querySelectorAll('.option-button');
+      optionButtons.forEach(btn => {
+        btn.classList.add('disabled');
+        btn.onclick = null;
+      });
+      
+      startAutoAdvance();
+    }
+
     function selectAnswer(choice) {
-      if (questionAnswered) return; // Prevent multiple answers
+      if (questionAnswered) return;
       
       questionAnswered = true;
       const q = currentQuestions[currentIndex];
+      const isCorrect = choice === q.answer;
       
       // Disable all option buttons and highlight the selected answer
       const optionButtons = document.querySelectorAll('.option-button');
       optionButtons.forEach(btn => {
         btn.classList.add('disabled');
-        btn.onclick = null; // Remove click handler
+        btn.onclick = null;
         
         if (btn.textContent === choice) {
-          if (choice === q.answer) {
+          if (isCorrect) {
             btn.classList.add('correct');
           } else {
             btn.classList.add('incorrect');
           }
         }
         
-        // Highlight the correct answer if wrong answer was selected
-        if (choice !== q.answer && btn.textContent === q.answer) {
+        if (!isCorrect && btn.textContent === q.answer) {
           btn.classList.add('correct');
         }
       });
       
-      if (choice === q.answer) {
-        document.getElementById("feedback").textContent = "Correct! +1 penny";
-        pennies++;
+      if (isCorrect) {
+        let pennyAmount = 1;
+        let bonusText = "";
+        
+        // Apply cottage bonus
+        if (storePurchases.includes("Seaside Irish Cottage")) {
+          pennyAmount *= 2;
+          bonusText += " 🏠 Cottage bonus: Double pennies!";
+        }
+        
+        // Apply Porsche speed bonus (if quiz completed faster)
+        if (storePurchases.includes("A Perfectly Purple Porsche 911 Turbo")) {
+          pennyAmount = Math.ceil(pennyAmount * 1.5);
+          bonusText += " 🏎️ Porsche speed bonus!";
+        }
+        
+        document.getElementById("feedback").innerHTML = `Correct! +${pennyAmount} ${pennyAmount === 1 ? 'penny' : 'pennies'}${bonusText}`;
+        pennies += pennyAmount;
         localStorage.setItem("pennies", pennies);
         document.getElementById("pennies").textContent = pennies;
-        if (document.getElementById("store-pennies")) {
-          document.getElementById("store-pennies").textContent = pennies;
-        }
+        
+        document.getElementById("next-btn").disabled = false;
+        document.getElementById("skip-btn").classList.add("hidden");
+        startAutoAdvance();
       } else {
-        document.getElementById("feedback").textContent = `Wrong! Answer was ${q.answer}`;
+        // Wrong answer
+        const brunoOwned = storePurchases.includes("Bruno the Bernese Mountain Dog");
+        
+        if (brunoOwned && !usedBrunoInRound && Math.random() < 0.5) {
+          // Bruno gives second chance
+          showBrunoAnimation();
+          usedBrunoInRound = true;
+        } else {
+          // Handle wrong answer
+          const porscheOwned = storePurchases.includes("A Perfectly Purple Porsche 911 Turbo");
+          
+          if (porscheOwned && !usedPorscheInRound) {
+            // Porsche saves streak
+            document.getElementById("feedback").textContent = `Wrong! Answer was ${q.answer}. 🏎️ Porsche saved your streak!`;
+            usedPorscheInRound = true;
+            document.getElementById("next-btn").disabled = false;
+            document.getElementById("skip-btn").classList.add("hidden");
+            startAutoAdvance();
+          } else {
+            // Normal wrong answer
+            document.getElementById("feedback").textContent = `Wrong! Answer was ${q.answer}`;
+            
+            if (isSurvivalMode) {
+              // End survival mode
+              setTimeout(() => {
+                endSurvivalMode();
+              }, 3000);
+              return;
+            } else {
+              document.getElementById("next-btn").disabled = false;
+              document.getElementById("skip-btn").classList.add("hidden");
+              startAutoAdvance();
+            }
+          }
+        }
       }
+    }
+
+    function showBrunoAnimation() {
+      // Create nebula background
+      const nebula = document.createElement('div');
+      nebula.className = 'nebula-bg';
+      document.body.appendChild(nebula);
       
-      // Enable the Next button
-      document.getElementById("next-btn").disabled = false;
+      // Create Bruno animation
+      const bruno = document.createElement('div');
+      bruno.className = 'bruno-animation';
+      bruno.innerHTML = `
+        <div>🐕 Bruno appears!</div>
+        <div style="margin-top: 20px;">✨ Second chance activated! ✨</div>
+      `;
+      document.body.appendChild(bruno);
       
-      // Start auto-advance countdown
-      startAutoAdvance();
+      // Remove after animation
+      setTimeout(() => {
+        if (nebula.parentNode) nebula.parentNode.removeChild(nebula);
+        if (bruno.parentNode) bruno.parentNode.removeChild(bruno);
+        
+        // Reset question for second chance
+        questionAnswered = false;
+        const optionButtons = document.querySelectorAll('.option-button');
+        optionButtons.forEach(btn => {
+          btn.classList.remove('disabled', 'correct', 'incorrect');
+          btn.onclick = () => selectAnswer(btn.textContent);
+        });
+        
+        document.getElementById("feedback").textContent = "Bruno gave you a second chance! Choose again.";
+      }, 3000);
+    }
+
+    function endSurvivalMode() {
+      const questionsAnswered = currentIndex + 1;
+      recordGameStats('survival', currentIndex, questionsAnswered);
+      
+      alert(`Survival Mode Complete!\nQuestions answered: ${questionsAnswered}\nPennies earned: Check your total!`);
+      backToMenu();
     }
 
     function startAutoAdvance() {
       let timeLeft = 5;
       const noticeElement = document.getElementById("auto-advance-notice");
       
-      // Show the notice immediately
       noticeElement.classList.remove("hidden");
       noticeElement.textContent = `Moving on to the next question in ${timeLeft} seconds`;
       
-      // Update countdown every second
       countdownTimer = setInterval(() => {
         timeLeft--;
         if (timeLeft > 0) {
@@ -549,16 +951,14 @@ body::before {
         }
       }, 1000);
       
-      // Auto-advance after 5 seconds
       autoAdvanceTimer = setTimeout(() => {
         nextQuestion();
       }, 5000);
     }
 
     function nextQuestion() {
-      if (!questionAnswered) return; // Prevent advancing without answering
+      if (!questionAnswered && !isSurvivalMode) return;
       
-      // Clear timers when manually advancing
       if (autoAdvanceTimer) {
         clearTimeout(autoAdvanceTimer);
         autoAdvanceTimer = null;
@@ -569,17 +969,24 @@ body::before {
       }
       
       currentIndex++;
-      if (currentIndex < currentQuestions.length) {
+      if (currentIndex < currentQuestions.length && (isSurvivalMode || currentIndex < 10)) {
         showQuestion();
       } else {
-        // Back to main menu after quiz
+        // End of regular quiz
+        if (!isSurvivalMode) {
+          const correctAnswers = currentQuestions.slice(0, 10).reduce((acc, q, i) => {
+            return acc + (i < currentIndex ? 1 : 0);
+          }, 0);
+          
+          recordGameStats(currentCategory, correctAnswers, Math.min(10, currentIndex));
+          awardDailyBonus();
+        }
+        
         backToMenu();
       }
     }
 
-    // Function to go back to main menu
     function backToMenu() {
-      // Clear any running timers
       if (autoAdvanceTimer) {
         clearTimeout(autoAdvanceTimer);
         autoAdvanceTimer = null;
@@ -591,11 +998,12 @@ body::before {
       
       document.getElementById("question-screen").classList.add("hidden");
       document.getElementById("store-screen").classList.add("hidden");
+      document.getElementById("data-analysis-screen").classList.add("hidden");
       document.getElementById("main-menu").classList.remove("hidden");
+      updateDisplay();
       renderStore();
     }
 
-    // Store functions
     function renderStore() {
       const storeDiv = document.getElementById("store");
       if (!storeDiv) return;
@@ -604,7 +1012,33 @@ body::before {
         const owned = storePurchases.includes(item.name);
         const div = document.createElement("div");
         div.className = "store-item";
-        div.textContent = `${item.name} - ${item.cost} pennies${owned ? " (Owned)" : ""}`;
+        
+        let description = `${item.name} - ${item.cost} pennies`;
+        
+        // Add item descriptions
+        switch(item.name) {
+          case "An Ice Cold Shmacking Orangina":
+            description += owned ? " (Owned) - Triple pennies for first game each day!" : " - Triple pennies for first game each day!";
+            break;
+          case "Bruno the Bernese Mountain Dog":
+            description += owned ? " (Owned) - 50% chance for second chance on wrong answers!" : " - 50% chance for second chance on wrong answers!";
+            break;
+          case "An Indestructible, Apocalypse-proof, Quantum Supercomputer That Always Works":
+            description += owned ? " (Owned) - Skip questions & unlock Data Analysis!" : " - Skip questions & unlock Data Analysis!";
+            break;
+          case "A Perfectly Purple Porsche 911 Turbo":
+            description += owned ? " (Owned) - Wrong answers don't break streak + speed bonuses!" : " - Wrong answers don't break streak + speed bonuses!";
+            break;
+          case "Seaside Irish Cottage":
+            description += owned ? " (Owned) - Save streak for 24hrs + double pennies!" : " - Save streak for 24hrs + double pennies!";
+            break;
+          case "The Answer to the Ultimate Question of Life, the Universe, and Everything":
+            description += owned ? " (Owned) - Game completed!" : " - Complete the game!";
+            break;
+        }
+        
+        div.textContent = description;
+        
         if (!owned && pennies >= item.cost) {
           const btn = document.createElement("button");
           btn.textContent = "Buy";
@@ -625,14 +1059,54 @@ body::before {
         if (document.getElementById("store-pennies")) {
           document.getElementById("store-pennies").textContent = pennies;
         }
+        
+        // Special handling for certain items
+        if (item.name === "An Indestructible, Apocalypse-proof, Quantum Supercomputer That Always Works") {
+          document.getElementById("data-analysis-btn").classList.remove("hidden");
+        }
+        
+        if (item.name === "The Answer to the Ultimate Question of Life, the Universe, and Everything") {
+          setTimeout(() => showGameCompletion(), 1000);
+        }
+        
         renderStore();
       }
     }
 
-    // Show / hide store screen
+    function showGameCompletion() {
+      // Create flash overlay
+      const overlay = document.createElement('div');
+      overlay.className = 'completion-overlay';
+      document.body.appendChild(overlay);
+      
+      // Create outro text
+      setTimeout(() => {
+        const outro = document.createElement('div');
+        outro.className = 'outro-text';
+        outro.innerHTML = `
+          <div style="font-size: 2em; margin-bottom: 20px;">GAME COMPLETE</div>
+          <div>You have discovered the Answer to the Ultimate Question</div>
+          <div>of Life, the Universe, and Everything.</div>
+          <div style="margin-top: 30px;">The answer, as we all know, is 42.</div>
+          <div style="margin-top: 20px;">But more importantly...</div>
+          <div style="margin-top: 20px;">You've mastered the art of trivia</div>
+          <div>across the cosmos.</div>
+          <div style="margin-top: 30px; font-size: 1.2em;">Congratulations, Space Cadet!</div>
+        `;
+        document.body.appendChild(outro);
+        
+        // Remove after animation
+        setTimeout(() => {
+          if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+          if (outro.parentNode) outro.parentNode.removeChild(outro);
+        }, 8000);
+      }, 2000);
+    }
+
     function showStore() {
       document.getElementById("main-menu").classList.add("hidden");
       document.getElementById("question-screen").classList.add("hidden");
+      document.getElementById("data-analysis-screen").classList.add("hidden");
       document.getElementById("store-screen").classList.remove("hidden");
       document.getElementById("store-pennies").textContent = pennies;
       renderStore();
@@ -640,6 +1114,63 @@ body::before {
 
     function closeStore() {
       document.getElementById("store-screen").classList.add("hidden");
+      document.getElementById("main-menu").classList.remove("hidden");
+    }
+
+    function showDataAnalysis() {
+      document.getElementById("main-menu").classList.add("hidden");
+      document.getElementById("question-screen").classList.add("hidden");
+      document.getElementById("store-screen").classList.add("hidden");
+      document.getElementById("data-analysis-screen").classList.remove("hidden");
+      
+      const content = document.getElementById("data-analysis-content");
+      content.innerHTML = "";
+      
+      // Overall stats
+      let totalQuestions = 0;
+      let totalCorrect = 0;
+      
+      Object.keys(gameStats).forEach(category => {
+        totalQuestions += gameStats[category].total;
+        totalCorrect += gameStats[category].correct;
+      });
+      
+      const overallRate = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
+      
+      content.innerHTML += `
+        <h3>📊 Overall Statistics</h3>
+        <div class="stat-item">
+          <span>Total Questions Answered:</span>
+          <span>${totalQuestions}</span>
+        </div>
+        <div class="stat-item">
+          <span>Overall Success Rate:</span>
+          <span>${overallRate}%</span>
+        </div>
+        <div class="stat-item">
+          <span>Current Streak:</span>
+          <span>${currentStreak} days</span>
+        </div>
+      `;
+      
+      // Category breakdown
+      content.innerHTML += `<h3>📈 Category Breakdown</h3>`;
+      
+      ['geography', 'flags', 'history', 'survival'].forEach(category => {
+        if (gameStats[category]) {
+          const stats = gameStats[category];
+          content.innerHTML += `
+            <div class="stat-item">
+              <span>${category.charAt(0).toUpperCase() + category.slice(1)}:</span>
+              <span>${stats.correct}/${stats.total} (${stats.successRate}%)</span>
+            </div>
+          `;
+        }
+      });
+    }
+
+    function closeDataAnalysis() {
+      document.getElementById("data-analysis-screen").classList.add("hidden");
       document.getElementById("main-menu").classList.remove("hidden");
     }
   </script>
